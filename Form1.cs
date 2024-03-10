@@ -67,7 +67,17 @@ namespace Process_Planning
             _bars.Add(pb);
         }
 
-        async void DoWork()
+        async Task ProgressThread(MyThread thread)
+        {
+            while (thread.Progress())
+            {
+                await Task.Delay(1000);
+            }
+
+            _threads.Remove(thread);
+        }
+
+        private async void StartButton_Click(object sender, EventArgs e)
         {
             if (_threads.Count == 0) return;
 
@@ -83,21 +93,6 @@ namespace Process_Planning
             clearData = true;
             startButton.Enabled = true;
             addThreadButton.Enabled = true;
-        }
-
-        async Task ProgressThread(MyThread thread)
-        {
-            while (thread.Progress())
-            {
-                await Task.Delay(1000);
-            }
-
-            _threads.Remove(thread);
-        }
-
-        private void startButton_Click(object sender, EventArgs e)
-        {
-            DoWork();
         }
     }
 }

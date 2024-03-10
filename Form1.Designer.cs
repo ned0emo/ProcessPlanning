@@ -78,7 +78,7 @@
             startButton.TabIndex = 2;
             startButton.Text = "Старт";
             startButton.UseVisualStyleBackColor = true;
-            startButton.Click += startButton_Click;
+            startButton.Click += StartButton_Click;
             // 
             // priorityTextBox
             // 
