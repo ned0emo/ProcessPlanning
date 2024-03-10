@@ -9,28 +9,36 @@ namespace Process_Planning
     public class MyThread
     {
         public readonly int id;
-        public readonly int maxValue;
         public readonly int priority;
-        public readonly int time;
+        public readonly int startTime;
 
         public ProgressBar progressBar;
         public Label label;
 
-        public MyThread(int id, int maxValue, int priority, int time, ProgressBar progressBar, Label label)
+        public MyThread(int id, int priority, int startTime, ProgressBar progressBar, Label label)
         {
             this.id = id;
-            this.maxValue = maxValue;
             this.priority = priority;
-            this.time = time;
             this.progressBar = progressBar;
             this.label = label;
+            this.startTime = startTime;
+
+            this.label.Text = this.ToString();
         }
 
-        public void Increment() => progressBar.Value++;
+        public bool Progress()
+        {
+            if (progressBar.Value < progressBar.Maximum)
+            {
+                progressBar.Value++;
+                return true;
+            }
+            return false;
+        }
 
         public override string ToString()
         {
-            return $"id: {id}, priority: {priority}, time: {time}";
+            return $"start time: {startTime}, priority: {priority}";
         }
     }
 }
