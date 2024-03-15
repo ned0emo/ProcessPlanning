@@ -13,18 +13,13 @@ namespace Process_Planning
         public int TimeLength { get; }
         public int Progress { get; set; } = 0;
 
-        public Label label;
-
-        public MyThread(int id, int startTime, int timeLength, Label label)
+        public MyThread(int id, int startTime, int timeLength)
         {
-            this.Id = id;
-            this.label = label;
+            Id = id;
 
             //this.priority = priority;
             TimeLength = timeLength;
             StartTime = startTime;
-
-            this.label.Text = $"start time: {StartTime}, length: {TimeLength}";
         }
     }
 }

@@ -54,11 +54,12 @@ namespace Process_Planning
             {
                 Location = new Point(3, 35 + id * 30),
                 AutoSize = true,
+                Text = $"start time: {startTime}, length: {timeLength}"
             };
 
             var thread = new MyThread(id++,
                 startTime,
-                timeLength, lbl);
+                timeLength);
             _threads.Add(thread);
 
             panel1.Controls.Add(lbl);
