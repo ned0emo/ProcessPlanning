@@ -8,6 +8,7 @@ namespace Process_Planning
         readonly List<Label> _labels;
 
         readonly List<MyThread> _threads;
+        readonly Random _rnd;
 
         bool clearData = false;
 
@@ -20,15 +21,17 @@ namespace Process_Planning
             _labels = [];
             _threads = [];
 
+            _rnd = new Random();
+
             InitializeComponent();
         }
 
         private void AddThreadButton_Click(object sender, EventArgs e)
         {
-            var startTime = int.TryParse(startTimeTextBox.Text, out int stRes) ? stRes : -1;
+            var startTime = int.TryParse(startTimeTextBox.Text, out int stRes) ? stRes : _rnd.Next(7);
             if (startTime < 0 || startTime > 19) return;
 
-            var timeLength = int.TryParse(timeTextBox.Text, out int tRes) ? tRes : -1;
+            var timeLength = int.TryParse(timeTextBox.Text, out int tRes) ? tRes : _rnd.Next(7) + 1;
             if (timeLength < 0 || timeLength + startTime > 19) return;
 
             if (clearData)
@@ -81,6 +84,7 @@ namespace Process_Planning
         {
             if (_threads.Count == 0) return;
 
+            textBox1.Text = "";
             startButton.Enabled = false;
             addThreadButton.Enabled = false;
 
@@ -90,15 +94,27 @@ namespace Process_Planning
 
             while (_threads.Count > 0)
             {
-                var newt = _threads.FirstOrDefault(t => t.StartTime == currentTime);
+                var newt = _threads.OrderBy(t => t.TimeLength).ThenBy(t => t.InitialStartTime)
+                    .ThenByDescending(t => t.Progress)
+                    .FirstOrDefault(t => t.StartTime == currentTime);
+                
+                //textBox1.Text += "newt: " + (newt == null ? "null\r\n" : $"id {newt.Id}; " +
+                //    $"start {newt.StartTime}; init {newt.InitialStartTime}; len {newt.TimeLength}\r\n");
+                
                 if (ct == null || newt != null && newt != ct && newt.TimeLength < ct.TimeLength)
                 {
-                    ct = newt;
+                    if (newt != null)
+                    {
+                        ct = newt;
+                            //_threads.FirstOrDefault(t => t.TimeLength == newt.TimeLength && t.InitialStartTime < newt.InitialStartTime) ?? newt;
+                    }
                 }
-                
+
                 ct ??= _threads.OrderBy(t => t.StartTime).ThenBy(t => t.TimeLength).FirstOrDefault();
-                
-                if (ct == null) 
+                //textBox1.Text += "ct: " + (ct == null ? "null\r\n" : $"id {ct.Id}; " +
+                //    $"start {ct.StartTime}; init {ct.InitialStartTime}; len {ct.TimeLength}\r\n");
+
+                if (ct == null)
                     break;
 
                 await Task.Delay(1000);
@@ -113,14 +129,34 @@ namespace Process_Planning
                 _labels.Add(num);
                 panel1.Controls.Add(num);
 
+                textBox1.Text += $"{currentTime}\r\n";
                 foreach (var thread in _threads)
                 {
+                    textBox1.Text += $"id {thread.Id}; start {thread.StartTime}; " +
+                        $"init {thread.InitialStartTime}; len {thread.TimeLength}; " +
+                        $"prog {thread.Progress}\r\n";
+
+                    if(ct.StartTime > currentTime)
+                    {
+                        var lb = new Label()
+                        {
+                            Text = "",
+                            Location = new Point(153 + currentTime * 31, 35 + thread.Id * 30),
+                            AutoSize = true,
+                        };
+
+                        panel1.Controls.Add(lb);
+                        _labels.Add(lb);
+                        continue;
+                    }
+
                     if (thread.StartTime > currentTime)
                     {
                         continue;
                     }
 
-                    if(thread.StartTime < currentTime)
+                    //thread.StartTime++;
+                    if (thread.StartTime <= currentTime)
                     {
                         thread.StartTime++;
                     }
@@ -146,6 +182,11 @@ namespace Process_Planning
                     panel1.Controls.Add(lbl);
                 }
                 currentTime++;
+
+                //if(ct.StartTime > currentTime)
+                //{
+                //    ct.StartTime++;
+                //}
 
                 if (ct.Progress == ct.TimeLength)
                 {

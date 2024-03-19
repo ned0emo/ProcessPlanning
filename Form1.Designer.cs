@@ -30,12 +30,12 @@
         {
             panel1 = new Panel();
             addThreadButton = new Button();
-            process1 = new System.Diagnostics.Process();
             startButton = new Button();
             label2 = new Label();
             timeTextBox = new TextBox();
             label3 = new Label();
             startTimeTextBox = new TextBox();
+            textBox1 = new TextBox();
             SuspendLayout();
             // 
             // panel1
@@ -55,18 +55,6 @@
             addThreadButton.Text = "Добавить поток";
             addThreadButton.UseVisualStyleBackColor = true;
             addThreadButton.Click += AddThreadButton_Click;
-            // 
-            // process1
-            // 
-            process1.StartInfo.Domain = "";
-            process1.StartInfo.LoadUserProfile = false;
-            process1.StartInfo.Password = null;
-            process1.StartInfo.StandardErrorEncoding = null;
-            process1.StartInfo.StandardInputEncoding = null;
-            process1.StartInfo.StandardOutputEncoding = null;
-            process1.StartInfo.UseCredentialsForNetworkingOnly = false;
-            process1.StartInfo.UserName = "";
-            process1.SynchronizingObject = this;
             // 
             // startButton
             // 
@@ -93,7 +81,6 @@
             timeTextBox.Name = "timeTextBox";
             timeTextBox.Size = new Size(50, 23);
             timeTextBox.TabIndex = 7;
-            timeTextBox.Text = "10";
             // 
             // label3
             // 
@@ -110,13 +97,23 @@
             startTimeTextBox.Name = "startTimeTextBox";
             startTimeTextBox.Size = new Size(50, 23);
             startTimeTextBox.TabIndex = 8;
-            startTimeTextBox.Text = "0";
+            // 
+            // textBox1
+            // 
+            textBox1.Location = new Point(794, 12);
+            textBox1.Multiline = true;
+            textBox1.Name = "textBox1";
+            textBox1.ReadOnly = true;
+            textBox1.ScrollBars = ScrollBars.Vertical;
+            textBox1.Size = new Size(280, 479);
+            textBox1.TabIndex = 10;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 503);
+            ClientSize = new Size(1086, 503);
+            Controls.Add(textBox1);
             Controls.Add(label3);
             Controls.Add(startTimeTextBox);
             Controls.Add(timeTextBox);
@@ -136,11 +133,11 @@
 
         private Panel panel1;
         private Button addThreadButton;
-        private System.Diagnostics.Process process1;
         private Button startButton;
         private Label label2;
         private TextBox timeTextBox;
         private Label label3;
         private TextBox startTimeTextBox;
+        private TextBox textBox1;
     }
 }

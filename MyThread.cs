@@ -10,6 +10,7 @@ namespace Process_Planning
     {
         public int Id { get; }
         public int StartTime { get; set; }
+        public int InitialStartTime { get; }
         public int TimeLength { get; }
         public int Progress { get; set; } = 0;
 
@@ -20,6 +21,7 @@ namespace Process_Planning
             //this.priority = priority;
             TimeLength = timeLength;
             StartTime = startTime;
+            InitialStartTime = startTime;
         }
     }
 }
