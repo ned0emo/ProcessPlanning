@@ -4,20 +4,19 @@ namespace Process_Planning
 {
     public partial class Form1 : Form
     {
-        readonly List<ProgressBar> _bars;
         readonly List<Label> _labels;
 
         readonly List<MyThread> _threads;
         readonly Random _rnd;
 
         bool clearData = false;
+        bool interrupt = false;
 
         int id = 0;
         int currentTime = 0;
 
         public Form1()
         {
-            _bars = [];
             _labels = [];
             _threads = [];
 
@@ -28,29 +27,14 @@ namespace Process_Planning
 
         private void AddThreadButton_Click(object sender, EventArgs e)
         {
-            var startTime = int.TryParse(startTimeTextBox.Text, out int stRes) ? stRes : _rnd.Next(7);
+            interrupt = false;
+            var startTime = int.TryParse(startTimeTextBox.Text, out int stRes) ? stRes : _rnd.Next(5);
             if (startTime < 0 || startTime > 19) return;
 
-            var timeLength = int.TryParse(timeTextBox.Text, out int tRes) ? tRes : _rnd.Next(7) + 1;
+            var timeLength = int.TryParse(timeTextBox.Text, out int tRes) ? tRes : _rnd.Next(5) + 1;
             if (timeLength < 0 || timeLength + startTime > 19) return;
 
-            if (clearData)
-            {
-                foreach (var pb1 in _bars)
-                {
-                    pb1.Dispose();
-                }
-
-                foreach (var lbl1 in _labels)
-                {
-                    lbl1.Dispose();
-                }
-
-                _bars.Clear();
-                _labels.Clear();
-                _threads.Clear();
-                id = 0;
-            }
+            if (clearData) ClearData();
             clearData = false;
 
             var lbl = new Label()
@@ -65,20 +49,8 @@ namespace Process_Planning
                 timeLength);
             _threads.Add(thread);
 
-            panel1.Controls.Add(lbl);
-
-            _labels.Add(lbl);
+            AddLabel(lbl);
         }
-
-        //async Task ProgressThread(MyThread thread)
-        //{
-        //    while (thread.Progress())
-        //    {
-        //        await Task.Delay(1000);
-        //    }
-        //
-        //    _threads.Remove(thread);
-        //}
 
         private async void StartButton_Click(object sender, EventArgs e)
         {
@@ -92,32 +64,31 @@ namespace Process_Planning
             if (ct == null) return;
             currentTime = ct.StartTime;
 
-            while (_threads.Count > 0)
+            while (_threads.Count > 0 && !interrupt)
             {
                 var newt = _threads.OrderBy(t => t.TimeLength).ThenBy(t => t.InitialStartTime)
-                    .ThenByDescending(t => t.Progress)
-                    .FirstOrDefault(t => t.StartTime == currentTime);
-                
-                //textBox1.Text += "newt: " + (newt == null ? "null\r\n" : $"id {newt.Id}; " +
-                //    $"start {newt.StartTime}; init {newt.InitialStartTime}; len {newt.TimeLength}\r\n");
-                
+                    .FirstOrDefault(t => t.StartTime == currentTime || t.Interrupted);
+
                 if (ct == null || newt != null && newt != ct && newt.TimeLength < ct.TimeLength)
                 {
                     if (newt != null)
                     {
+                        if (ct != null)
+                        {
+                            ct.Interrupted = true;
+                        }
                         ct = newt;
-                            //_threads.FirstOrDefault(t => t.TimeLength == newt.TimeLength && t.InitialStartTime < newt.InitialStartTime) ?? newt;
                     }
                 }
 
                 ct ??= _threads.OrderBy(t => t.StartTime).ThenBy(t => t.TimeLength).FirstOrDefault();
-                //textBox1.Text += "ct: " + (ct == null ? "null\r\n" : $"id {ct.Id}; " +
-                //    $"start {ct.StartTime}; init {ct.InitialStartTime}; len {ct.TimeLength}\r\n");
 
                 if (ct == null)
                     break;
 
-                await Task.Delay(1000);
+                ct.Interrupted = false;
+
+                await Task.Delay(500);
 
                 var num = new Label()
                 {
@@ -126,18 +97,18 @@ namespace Process_Planning
                     Text = currentTime.ToString()
                 };
 
-                _labels.Add(num);
-                panel1.Controls.Add(num);
+                AddLabel(num);
 
                 textBox1.Text += $"{currentTime}\r\n";
-                foreach (var thread in _threads)
-                {
-                    textBox1.Text += $"id {thread.Id}; start {thread.StartTime}; " +
-                        $"init {thread.InitialStartTime}; len {thread.TimeLength}; " +
-                        $"prog {thread.Progress}\r\n";
 
-                    if(ct.StartTime > currentTime)
+                if (ct.StartTime > currentTime)
+                {
+                    foreach (var thread in _threads)
                     {
+                        textBox1.Text += $"id {thread.Id}; start {thread.StartTime}; " +
+                        $"init {thread.InitialStartTime}; len {thread.TimeLength}; " +
+                        $"prog {thread.Progress}; inter {thread.Interrupted}\r\n";
+
                         var lb = new Label()
                         {
                             Text = "",
@@ -145,48 +116,46 @@ namespace Process_Planning
                             AutoSize = true,
                         };
 
-                        panel1.Controls.Add(lb);
-                        _labels.Add(lb);
-                        continue;
+                        AddLabel(lb);
                     }
-
-                    if (thread.StartTime > currentTime)
+                }
+                else
+                {
+                    foreach (var thread in _threads)
                     {
-                        continue;
+                        textBox1.Text += $"id {thread.Id}; start {thread.StartTime}; " +
+                        $"init {thread.InitialStartTime}; len {thread.TimeLength}; " +
+                        $"prog {thread.Progress}; paused {thread.Interrupted}\r\n";
+
+                        if (thread.StartTime > currentTime)
+                        {
+                            continue;
+                        }
+
+                        if (thread.StartTime <= currentTime)
+                        {
+                            thread.StartTime++;
+                        }
+
+                        var lbl = new Label()
+                        {
+                            Location = new Point(153 + currentTime * 31, 35 + thread.Id * 30),
+                            AutoSize = true,
+                        };
+                        AddLabel(lbl);
+
+                        if (thread == ct)
+                        {
+                            lbl.Text = "È";
+                            ct.Progress++;
+
+                            continue;
+                        }
+
+                        lbl.Text = "Ã";
                     }
-
-                    //thread.StartTime++;
-                    if (thread.StartTime <= currentTime)
-                    {
-                        thread.StartTime++;
-                    }
-
-                    var lbl = new Label()
-                    {
-                        //Text = "È",
-                        Location = new Point(153 + currentTime * 31, 35 + thread.Id * 30),
-                        AutoSize = true,
-                    };
-
-                    _labels.Add(lbl);
-
-                    if (thread == ct)
-                    {
-                        lbl.Text = "È";
-                        ct.Progress++;
-                        panel1.Controls.Add(lbl);
-                        continue;
-                    }
-
-                    lbl.Text = "Ã";
-                    panel1.Controls.Add(lbl);
                 }
                 currentTime++;
-
-                //if(ct.StartTime > currentTime)
-                //{
-                //    ct.StartTime++;
-                //}
 
                 if (ct.Progress == ct.TimeLength)
                 {
@@ -198,6 +167,32 @@ namespace Process_Planning
             clearData = true;
             startButton.Enabled = true;
             addThreadButton.Enabled = true;
+        }
+
+        void AddLabel(Label lbl)
+        {
+            if (interrupt) return;
+
+            panel1.Controls.Add(lbl);
+            _labels.Add(lbl);
+        }
+
+        void ClearData()
+        {
+            foreach (var lbl1 in _labels)
+            {
+                lbl1.Dispose();
+            }
+
+            _labels.Clear();
+            _threads.Clear();
+            id = 0;
+        }
+
+        private void resetButton_Click(object sender, EventArgs e)
+        {
+            interrupt = true;
+            ClearData();
         }
     }
 }
